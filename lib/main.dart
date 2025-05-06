@@ -23,7 +23,7 @@ class MyApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       theme: AppTheme.lightTheme,
       darkTheme: AppTheme.darkTheme,
-      themeMode: ThemeMode.system, // 시스템 설정에 따라 테마 적용
+      themeMode: ThemeMode.light, // 항상 라이트 테마 적용
       home: const SplashScreen(),
     );
   }
