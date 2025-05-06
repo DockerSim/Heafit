@@ -43,3 +43,6 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+
+# 민감한 정보가 포함된 파일
+lib/config/secrets.dart
