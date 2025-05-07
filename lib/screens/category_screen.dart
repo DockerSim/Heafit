@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:heafit/constants/theme.dart';
 import 'package:heafit/widgets/section_title.dart';
+import 'package:heafit/services/google_auth_service.dart';
 import 'package:intl/intl.dart';
 import 'package:heafit/screens/statistics_screen.dart';
 
@@ -36,6 +37,12 @@ class CategoryScreen extends StatefulWidget {
 }
 
 class _CategoryScreenState extends State<CategoryScreen> {
+  // Google 인증 서비스
+  final GoogleAuthService _googleAuthService = GoogleAuthService();
+  bool _isCalendarConnected = false;
+
+  // 선택된 메인 카테고리 인덱스
+  int _selectedCategoryIndex = 0;
   // 선택된 탭 인덱스
   int _selectedTabIndex = 0;
 
@@ -506,6 +513,20 @@ class _CategoryScreenState extends State<CategoryScreen> {
       ),
     ],
   };
+
+  @override
+  void initState() {
+    super.initState();
+    _checkCalendarConnection();
+  }
+
+  // 캘린더 연결 상태 확인
+  Future<void> _checkCalendarConnection() async {
+    await _googleAuthService.init();
+    setState(() {
+      _isCalendarConnected = _googleAuthService.isCalendarConnected;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -1784,6 +1805,72 @@ class _CategoryScreenState extends State<CategoryScreen> {
                       ),
                       const SizedBox(width: 8),
                       Text(
+                        benefit['description'],
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: Theme.of(
+                            context,
+                          ).colorScheme.onSurface.withOpacity(0.7),
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Row(
+                        children: [
+                          const Icon(
+                            Icons.calendar_today,
+                            size: 12,
+                            color: Colors.grey,
+                          ),
+                          const SizedBox(width: 4),
+                          Text(
+                            benefit['period'],
+                            style: const TextStyle(
+                              fontSize: 12,
+                              color: Colors.grey,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Wrap(
+                              spacing: 8,
+                              children:
+                                  (benefit['tags'] as List<String>).map((tag) {
+                                    return Chip(
+                                      label: Text(
+                                        tag,
+                                        style: const TextStyle(fontSize: 10),
+                                      ),
+                                      padding: EdgeInsets.zero,
+                                      materialTapTargetSize:
+                                          MaterialTapTargetSize.shrinkWrap,
+                                      backgroundColor: AppTheme.primaryColor
+                                          .withOpacity(0.1),
+                                    );
+                                  }).toList(),
+                            ),
+                          ),
+                          TextButton.icon(
+                            onPressed: () => _showSaveBenefitDialog(benefit),
+                            icon: const Icon(Icons.event_available, size: 16),
+                            label: const Text('일정 저장'),
+                            style: TextButton.styleFrom(
+                              foregroundColor: AppTheme.primaryColor,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            },
+          ),
+        ),
+      ],
                         '기간: ${_selectedBenefit!.period}',
                         style: const TextStyle(color: Colors.grey),
                       ),
@@ -2596,5 +2683,354 @@ class _CategoryScreenState extends State<CategoryScreen> {
         ),
       ),
     );
+  }
+
+  // 같은 날짜에 동일한 제목의 이벤트가 있는지 확인
+  Future<Map<String, dynamic>> _checkDuplicateEvent(
+    String title,
+    DateTime date,
+  ) async {
+    if (!_isCalendarConnected || _googleAuthService.heafitCalendarId == null) {
+      return {'isDuplicate': false, 'duplicateEvents': []};
+    }
+
+    // 해당 날짜의 시작과 끝
+    final dayStart = DateTime(date.year, date.month, date.day);
+    final dayEnd = DateTime(date.year, date.month, date.day, 23, 59, 59);
+
+    // Heafit 캘린더의 이벤트 가져오기
+    final events = await _googleAuthService.getEvents(
+      startTime: dayStart,
+      endTime: dayEnd,
+      calendarId: _googleAuthService.heafitCalendarId,
+    );
+
+    // 제목이 동일하거나 유사한 이벤트 검색
+    final duplicateEvents =
+        events.where((event) {
+          // 제목이 완전히 동일한 경우
+          if (event.summary == title) {
+            return true;
+          }
+
+          // 제목에 키워드가 포함된 경우 (예: "스타벅스 50% 할인" vs "스타벅스 방문")
+          final keywords = title.split(' ');
+          for (final keyword in keywords) {
+            if (keyword.length > 1 &&
+                event.summary != null &&
+                event.summary!.contains(keyword)) {
+              return true;
+            }
+          }
+
+          return false;
+        }).toList();
+
+    return {
+      'isDuplicate': duplicateEvents.isNotEmpty,
+      'duplicateEvents': duplicateEvents,
+    };
+  }
+
+  // 혜택을 일정으로 저장하는 다이얼로그 표시
+  void _showSaveBenefitDialog(Map<String, dynamic> benefit) {
+    if (!_isCalendarConnected) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('구글 캘린더 연결이 필요합니다. 프로필 탭에서 연결해주세요.'),
+          backgroundColor: Colors.orange,
+        ),
+      );
+      return;
+    }
+
+    final titleController = TextEditingController(text: benefit['title']);
+    final descriptionController = TextEditingController(
+      text: benefit['description'],
+    );
+
+    // 현재 날짜와 시간을 기본값으로 설정
+    DateTime selectedDate = DateTime.now();
+    TimeOfDay startTime = TimeOfDay.now();
+    TimeOfDay endTime = TimeOfDay(
+      hour: TimeOfDay.now().hour + 1,
+      minute: TimeOfDay.now().minute,
+    );
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return AlertDialog(
+              title: const Text('혜택 일정 저장'),
+              content: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    TextField(
+                      controller: titleController,
+                      decoration: const InputDecoration(labelText: '제목'),
+                    ),
+                    const SizedBox(height: 12),
+                    TextField(
+                      controller: descriptionController,
+                      decoration: const InputDecoration(labelText: '혜택 설명'),
+                      maxLines: 2,
+                    ),
+                    const SizedBox(height: 20),
+                    Row(
+                      children: [
+                        const Text(
+                          '날짜: ',
+                          style: TextStyle(fontWeight: FontWeight.bold),
+                        ),
+                        TextButton(
+                          onPressed: () async {
+                            final pickedDate = await showDatePicker(
+                              context: context,
+                              initialDate: selectedDate,
+                              firstDate: DateTime.now(),
+                              lastDate: DateTime.now().add(
+                                const Duration(days: 365),
+                              ),
+                            );
+                            if (pickedDate != null) {
+                              setState(() {
+                                selectedDate = pickedDate;
+                              });
+                            }
+                          },
+                          child: Text(
+                            '${selectedDate.year}년 ${selectedDate.month}월 ${selectedDate.day}일',
+                          ),
+                        ),
+                      ],
+                    ),
+                    Row(
+                      children: [
+                        const Text(
+                          '시작 시간: ',
+                          style: TextStyle(fontWeight: FontWeight.bold),
+                        ),
+                        TextButton(
+                          onPressed: () async {
+                            final pickedTime = await showTimePicker(
+                              context: context,
+                              initialTime: startTime,
+                            );
+                            if (pickedTime != null) {
+                              setState(() {
+                                startTime = pickedTime;
+                                // 종료 시간이 시작 시간보다 이전이면 조정
+                                if (startTime.hour > endTime.hour ||
+                                    (startTime.hour == endTime.hour &&
+                                        startTime.minute >= endTime.minute)) {
+                                  endTime = TimeOfDay(
+                                    hour: startTime.hour + 1,
+                                    minute: startTime.minute,
+                                  );
+                                }
+                              });
+                            }
+                          },
+                          child: Text(
+                            '${startTime.hour}:${startTime.minute.toString().padLeft(2, '0')}',
+                          ),
+                        ),
+                      ],
+                    ),
+                    Row(
+                      children: [
+                        const Text(
+                          '종료 시간: ',
+                          style: TextStyle(fontWeight: FontWeight.bold),
+                        ),
+                        TextButton(
+                          onPressed: () async {
+                            final pickedTime = await showTimePicker(
+                              context: context,
+                              initialTime: endTime,
+                            );
+                            if (pickedTime != null) {
+                              setState(() {
+                                endTime = pickedTime;
+                              });
+                            }
+                          },
+                          child: Text(
+                            '${endTime.hour}:${endTime.minute.toString().padLeft(2, '0')}',
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text('취소'),
+                ),
+                ElevatedButton(
+                  onPressed: () async {
+                    // 일정 중복 확인
+                    final result = await _checkDuplicateEvent(
+                      titleController.text,
+                      selectedDate,
+                    );
+
+                    if (result['isDuplicate']) {
+                      // 중복 일정이 있는 경우 확인 다이얼로그 표시
+                      final duplicateEvents = result['duplicateEvents'];
+                      final shouldContinue = await _showDuplicateWarningDialog(
+                        duplicateEvents,
+                      );
+
+                      if (!shouldContinue) {
+                        Navigator.pop(context);
+                        return;
+                      }
+                    }
+
+                    // 일정 추가
+                    final startDateTime = DateTime(
+                      selectedDate.year,
+                      selectedDate.month,
+                      selectedDate.day,
+                      startTime.hour,
+                      startTime.minute,
+                    );
+
+                    final endDateTime = DateTime(
+                      selectedDate.year,
+                      selectedDate.month,
+                      selectedDate.day,
+                      endTime.hour,
+                      endTime.minute,
+                    );
+
+                    // 혜택 태그 정보 추가
+                    final tags = benefit['tags'] as List<String>;
+                    final tagsInfo =
+                        tags.isNotEmpty ? '태그: ${tags.join(', ')}\n' : '';
+                    final period = benefit['period'] ?? '';
+
+                    // 혜택 메타데이터를 포함한 설명 구성
+                    final enhancedDescription =
+                        '${descriptionController.text}\n\n'
+                        '기간: $period\n'
+                        '$tagsInfo'
+                        '[Heafit 앱에서 저장한 혜택 정보]\n'
+                        '저장 시간: ${DateTime.now()}';
+
+                    final success = await _googleAuthService.addEventToCalendar(
+                      title: titleController.text,
+                      description: enhancedDescription,
+                      startTime: startDateTime,
+                      endTime: endDateTime,
+                      calendarId: _googleAuthService.heafitCalendarId,
+                    );
+
+                    Navigator.pop(context);
+
+                    if (success) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('혜택 일정이 추가되었습니다.'),
+                          backgroundColor: AppTheme.primaryColor,
+                        ),
+                      );
+                    } else {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('일정 추가에 실패했습니다.'),
+                          backgroundColor: Colors.red,
+                        ),
+                      );
+                    }
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppTheme.primaryColor,
+                  ),
+                  child: const Text('저장'),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
+
+  // 중복 일정 경고 다이얼로그
+  Future<bool> _showDuplicateWarningDialog(
+    List<dynamic> duplicateEvents,
+  ) async {
+    return await showDialog<bool>(
+          context: context,
+          builder: (context) {
+            return AlertDialog(
+              title: const Text('유사한 일정 감지됨'),
+              content: SizedBox(
+                width: double.maxFinite,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text('선택한 날짜에 이미 유사한 혜택 일정이 존재합니다:'),
+                    const SizedBox(height: 12),
+                    ...duplicateEvents
+                        .take(3)
+                        .map(
+                          (event) => Padding(
+                            padding: const EdgeInsets.only(bottom: 8.0),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  event.summary ?? '제목 없음',
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                                if (event.start?.dateTime != null)
+                                  Text(
+                                    '시간: ${event.start!.dateTime!.hour}:${event.start!.dateTime!.minute.toString().padLeft(2, '0')}',
+                                    style: const TextStyle(
+                                      fontSize: 12,
+                                      color: Colors.grey,
+                                    ),
+                                  ),
+                              ],
+                            ),
+                          ),
+                        )
+                        .toList(),
+                    if (duplicateEvents.length > 3)
+                      Text('외 ${duplicateEvents.length - 3}개 일정'),
+                    const SizedBox(height: 12),
+                    const Text('그래도 이 혜택 일정을 추가하시겠습니까?'),
+                  ],
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context, false),
+                  child: const Text('취소'),
+                ),
+                ElevatedButton(
+                  onPressed: () => Navigator.pop(context, true),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppTheme.primaryColor,
+                  ),
+                  child: const Text('계속 추가'),
+                ),
+              ],
+            );
+          },
+        ) ??
+        false;
   }
 }
