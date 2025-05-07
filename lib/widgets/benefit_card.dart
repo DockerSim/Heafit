@@ -8,12 +8,12 @@ class BenefitCard extends StatelessWidget {
   final String period;
 
   const BenefitCard({
-    Key? key,
+    super.key,
     required this.title,
     required this.description,
     required this.imageUrl,
     required this.period,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

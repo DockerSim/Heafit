@@ -86,6 +86,7 @@ class _CategoryScreenState extends State<CategoryScreen> {
     {'name': '중식', 'icon': Icons.ramen_dining},
     {'name': '일식', 'icon': Icons.set_meal},
     {'name': '양식', 'icon': Icons.dining},
+    {'name': '패스트푸드', 'icon': Icons.fastfood},
     {'name': '카페/디저트', 'icon': Icons.coffee},
   ];
 
@@ -142,6 +143,14 @@ class _CategoryScreenState extends State<CategoryScreen> {
       {'name': '아웃백', 'imageUrl': 'assets/images/outback.jpg'},
       {'name': '애슐리', 'imageUrl': 'assets/images/ashley.jpg'},
       {'name': '빕스', 'imageUrl': 'assets/images/vips.jpg'},
+    ],
+    '패스트푸드': [
+      {'name': '맥도날드', 'imageUrl': 'assets/images/mcdonalds.jpg'},
+      {'name': '버거킹', 'imageUrl': 'assets/images/burgerking.jpg'},
+      {'name': '롯데리아', 'imageUrl': 'assets/images/lotteria.jpg'},
+      {'name': '서브웨이', 'imageUrl': 'assets/images/subway.jpg'},
+      {'name': 'KFC', 'imageUrl': 'assets/images/kfc.jpg'},
+      {'name': '맘스터치', 'imageUrl': 'assets/images/momstouch.jpg'},
     ],
     '카페/디저트': [
       {'name': '스타벅스', 'imageUrl': 'assets/images/starbucks.jpg'},

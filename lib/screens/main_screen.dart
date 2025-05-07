@@ -6,7 +6,7 @@ import 'package:heafit/screens/calendar_screen.dart';
 import 'package:heafit/screens/profile_screen.dart';
 
 class MainScreen extends StatefulWidget {
-  const MainScreen({Key? key}) : super(key: key);
+  const MainScreen({super.key});
 
   @override
   State<MainScreen> createState() => _MainScreenState();
@@ -67,8 +67,8 @@ class _MainScreenState extends State<MainScreen>
             _currentIndex = index;
           });
         },
-        children: _screens,
-        physics: const NeverScrollableScrollPhysics(), // 스와이프로 페이지 전환 비활성화
+        physics: const NeverScrollableScrollPhysics(),
+        children: _screens, // 스와이프로 페이지 전환 비활성화
       ),
       bottomNavigationBar: Container(
         decoration: BoxDecoration(

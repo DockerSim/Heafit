@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:heafit/constants/theme.dart';
 import 'package:intl/intl.dart';
+import 'package:fl_chart/fl_chart.dart';
 
 class StatisticsScreen extends StatefulWidget {
   const StatisticsScreen({super.key});
@@ -21,6 +22,81 @@ class _StatisticsScreenState extends State<StatisticsScreen>
     decimalDigits: 0,
   );
 
+  // 월별 절약 금액 데이터
+  final List<Map<String, dynamic>> _monthlySavings = [
+    {'month': '1월', 'amount': 78000, 'percentage': 8},
+    {'month': '2월', 'amount': 92000, 'percentage': 12},
+    {'month': '3월', 'amount': 88000, 'percentage': 10},
+    {'month': '4월', 'amount': 105000, 'percentage': 15},
+    {'month': '5월', 'amount': 138500, 'percentage': 20},
+  ];
+
+  // 카테고리별 절약 금액 데이터
+  final List<Map<String, dynamic>> _categorySavings = [
+    {
+      'category': '카페/식당',
+      'amount': 35000,
+      'color': Colors.brown,
+      'icon': Icons.coffee,
+    },
+    {
+      'category': '쇼핑',
+      'amount': 42000,
+      'color': Colors.blue,
+      'icon': Icons.shopping_bag,
+    },
+    {
+      'category': '영화/공연',
+      'amount': 25000,
+      'color': Colors.purple,
+      'icon': Icons.movie,
+    },
+    {
+      'category': '교통',
+      'amount': 18000,
+      'color': Colors.green,
+      'icon': Icons.directions_car,
+    },
+    {
+      'category': '기타',
+      'amount': 18500,
+      'color': Colors.orange,
+      'icon': Icons.more_horiz,
+    },
+  ];
+
+  // 이번달 혜택 데이터
+  final List<Map<String, dynamic>> _benefits = [
+    {
+      'name': '스타벅스 1+1',
+      'date': '2023.05.12',
+      'amount': 4800,
+      'icon': Icons.coffee,
+      'color': Colors.green,
+    },
+    {
+      'name': 'CGV 영화 할인',
+      'date': '2023.05.08',
+      'amount': 6000,
+      'icon': Icons.movie,
+      'color': Colors.red,
+    },
+    {
+      'name': '올리브영 5천원 할인',
+      'date': '2023.05.05',
+      'amount': 5000,
+      'icon': Icons.shopping_bag,
+      'color': Colors.pink,
+    },
+    {
+      'name': '배달의민족 3천원 할인',
+      'date': '2023.05.01',
+      'amount': 3000,
+      'icon': Icons.fastfood,
+      'color': Colors.blue,
+    },
+  ];
+
   // 통계 데이터 (실제 앱에서는 API나 로컬 DB에서 가져옴)
   final Map<String, List<double>> _savingsByMonth = {
     '1월': [45000, 38000, 12000, 8000, 15000],
@@ -40,6 +116,15 @@ class _StatisticsScreenState extends State<StatisticsScreen>
 
   final List<String> _categories = ['카페/식당', '쇼핑', '영화/공연', '교통', '기타'];
 
+  // 카드/멤버십 데이터
+  final List<Map<String, dynamic>> _membershipData = [
+    {'name': '신한카드', 'amount': 20000, 'count': 8, 'color': Colors.blue},
+    {'name': '현대카드', 'amount': 15000, 'count': 5, 'color': Colors.black},
+    {'name': 'SKT 멤버십', 'amount': 12000, 'count': 4, 'color': Colors.red},
+    {'name': '네이버페이', 'amount': 8000, 'count': 3, 'color': Colors.green},
+    {'name': '카카오페이', 'amount': 5000, 'count': 2, 'color': Colors.yellow},
+  ];
+
   @override
   void initState() {
     super.initState();
@@ -55,15 +140,28 @@ class _StatisticsScreenState extends State<StatisticsScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.white,
       appBar: AppBar(
-        title: const Text('나의 혜택 통계'),
+        backgroundColor: Colors.white,
+        elevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: Colors.black),
+          onPressed: () => Navigator.pop(context),
+        ),
+        title: const Text(
+          '나의 혜택 통계',
+          style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
+        ),
         centerTitle: true,
         bottom: TabBar(
           controller: _tabController,
+          labelColor: AppTheme.primaryColor,
+          unselectedLabelColor: Colors.grey,
+          indicatorColor: AppTheme.primaryColor,
           tabs: const [
             Tab(text: '월별 추이'),
             Tab(text: '카테고리별'),
-            Tab(text: '카드/멤버십별'),
+            Tab(text: '멤버십별'),
           ],
         ),
       ),
@@ -80,58 +178,19 @@ class _StatisticsScreenState extends State<StatisticsScreen>
 
   // 월별 추이 탭
   Widget _buildMonthlyTrendTab() {
-    // 월별 총 절약액
-    final List<double> monthlyTotals =
-        _savingsByMonth.entries
-            .map((entry) => entry.value.reduce((a, b) => a + b))
-            .toList();
-
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // 이번 달 요약 카드
-          _buildSummaryCard(),
+          _buildTotalSavingsCard(),
 
-          const SizedBox(height: 24),
-
-          // 월별 추이 그래프
-          const Text(
-            '월별 절약 추이',
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-          ),
-          const SizedBox(height: 16),
-
-          SizedBox(
-            height: 200,
-            child: Container(
-              color: Colors.grey.shade200,
-              child: const Center(child: Text('절약 추이 그래프가 표시됩니다')),
-            ),
-          ),
-
-          const SizedBox(height: 32),
-
-          // 목표 달성률
-          const Text(
-            '월간 절약 목표 달성률',
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-          ),
-          const SizedBox(height: 16),
-
-          _buildGoalProgressBar(),
-
-          const SizedBox(height: 32),
+          // 월별 절약 추이 차트
+          _buildMonthlyChart(),
 
           // 이번 달 인기 혜택
-          const Text(
-            '이번 달 인기 혜택',
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-          ),
-          const SizedBox(height: 16),
-
-          _buildPopularBenefitsList(),
+          _buildSavingBenefits(),
         ],
       ),
     );
@@ -139,79 +198,16 @@ class _StatisticsScreenState extends State<StatisticsScreen>
 
   // 카테고리별 통계 탭
   Widget _buildCategoryTab() {
-    // 현재 달(5월) 데이터 기준
-    final currentMonthData = _savingsByMonth['5월']!;
-    final totalAmount = currentMonthData.reduce((a, b) => a + b);
-
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            '카테고리별 절약 금액',
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-          ),
-          const SizedBox(height: 16),
+          // 이번 달 요약 카드
+          _buildTotalSavingsCard(),
 
-          // 파이 차트 자리
-          SizedBox(
-            height: 280,
-            child: Container(
-              color: Colors.grey.shade200,
-              child: const Center(child: Text('카테고리별 파이 차트가 표시됩니다')),
-            ),
-          ),
-
-          const SizedBox(height: 24),
-
-          // 범례 및 금액 목록
-          ...List.generate(
-            _categories.length,
-            (index) => Padding(
-              padding: const EdgeInsets.only(bottom: 8),
-              child: Row(
-                children: [
-                  Container(
-                    width: 16,
-                    height: 16,
-                    color: _categoryColors[index],
-                  ),
-                  const SizedBox(width: 8),
-                  Text(
-                    _categories[index],
-                    style: const TextStyle(fontWeight: FontWeight.bold),
-                  ),
-                  const Spacer(),
-                  Text(
-                    '${_currencyFormat.format(currentMonthData[index])}원',
-                    style: const TextStyle(fontWeight: FontWeight.bold),
-                  ),
-                ],
-              ),
-            ),
-          ),
-
-          const Divider(height: 32),
-
-          // 총 금액
-          Row(
-            children: [
-              const Text(
-                '총 절약 금액',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-              ),
-              const Spacer(),
-              Text(
-                '${_currencyFormat.format(totalAmount)}원',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  color: AppTheme.primaryColor,
-                ),
-              ),
-            ],
-          ),
+          // 카테고리별 분석
+          _buildCategoryBreakdown(),
         ],
       ),
     );
@@ -219,114 +215,206 @@ class _StatisticsScreenState extends State<StatisticsScreen>
 
   // 카드/멤버십별 통계 탭
   Widget _buildMembershipTab() {
-    // 임시 데이터
-    final List<Map<String, dynamic>> membershipData = [
-      {'name': '신한카드', 'amount': 20000, 'count': 8},
-      {'name': '현대카드', 'amount': 15000, 'count': 5},
-      {'name': 'SKT 멤버십', 'amount': 12000, 'count': 4},
-      {'name': '네이버페이', 'amount': 8000, 'count': 3},
-      {'name': '카카오페이', 'amount': 5000, 'count': 2},
-    ];
-
-    membershipData.sort((a, b) => b['amount'].compareTo(a['amount']));
+    _membershipData.sort((a, b) => b['amount'].compareTo(a['amount']));
 
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            '카드/멤버십별 혜택 사용량',
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-          ),
-          const SizedBox(height: 16),
+          // 이번 달 요약 카드
+          _buildTotalSavingsCard(),
 
-          // 바 차트 자리
-          SizedBox(
-            height: 200,
-            child: Container(
-              color: Colors.grey.shade200,
-              child: const Center(child: Text('카드/멤버십별 바 차트가 표시됩니다')),
+          // 멤버십별 분석
+          Container(
+            margin: const EdgeInsets.only(top: 16),
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(16),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.05),
+                  blurRadius: 10,
+                  spreadRadius: 0,
+                  offset: const Offset(0, 2),
+                ),
+              ],
             ),
-          ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  '카드/멤버십별 혜택',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black87,
+                  ),
+                ),
+                const SizedBox(height: 16),
 
-          const SizedBox(height: 32),
-
-          // 상세 목록
-          const Text(
-            '카드/멤버십별 혜택 상세',
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-          ),
-          const SizedBox(height: 16),
-
-          ...membershipData
-              .map(
-                (data) => Card(
-                  margin: const EdgeInsets.only(bottom: 12),
-                  child: Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: Row(
-                      children: [
-                        // 카드/멤버십 아이콘 또는 이니셜
-                        CircleAvatar(
-                          backgroundColor: AppTheme.primaryColor.withOpacity(
-                            0.1,
-                          ),
-                          child: Text(
-                            data['name'][0],
-                            style: TextStyle(
-                              color: AppTheme.primaryColor,
-                              fontWeight: FontWeight.bold,
-                            ),
+                SizedBox(
+                  height: 200,
+                  child: BarChart(
+                    BarChartData(
+                      alignment: BarChartAlignment.spaceAround,
+                      maxY: 25000,
+                      barTouchData: BarTouchData(
+                        enabled: true,
+                        touchTooltipData: BarTouchTooltipData(
+                          tooltipBgColor: Colors.blueGrey.withOpacity(0.8),
+                          tooltipPadding: const EdgeInsets.all(8),
+                          tooltipMargin: 8,
+                          getTooltipItem: (group, groupIndex, rod, rodIndex) {
+                            return BarTooltipItem(
+                              '${_membershipData[groupIndex]['name']}\n${_currencyFormat.format(_membershipData[groupIndex]['amount'])}원',
+                              const TextStyle(color: Colors.white),
+                            );
+                          },
+                        ),
+                      ),
+                      titlesData: FlTitlesData(
+                        show: true,
+                        bottomTitles: AxisTitles(
+                          sideTitles: SideTitles(
+                            showTitles: true,
+                            getTitlesWidget: (value, meta) {
+                              if (value >= _membershipData.length ||
+                                  value < 0) {
+                                return const SizedBox.shrink();
+                              }
+                              return Padding(
+                                padding: const EdgeInsets.only(top: 8.0),
+                                child: Text(
+                                  _membershipData[value.toInt()]['name']
+                                      .toString()
+                                      .substring(0, 2),
+                                  style: const TextStyle(
+                                    color: Colors.grey,
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 12,
+                                  ),
+                                ),
+                              );
+                            },
                           ),
                         ),
-                        const SizedBox(width: 16),
+                        leftTitles: AxisTitles(
+                          sideTitles: SideTitles(
+                            showTitles: true,
+                            getTitlesWidget: (value, meta) {
+                              return Text(
+                                '${(value / 1000).toInt()}천',
+                                style: const TextStyle(
+                                  color: Colors.grey,
+                                  fontSize: 10,
+                                ),
+                              );
+                            },
+                            reservedSize: 30,
+                          ),
+                        ),
+                        topTitles: AxisTitles(
+                          sideTitles: SideTitles(showTitles: false),
+                        ),
+                        rightTitles: AxisTitles(
+                          sideTitles: SideTitles(showTitles: false),
+                        ),
+                      ),
+                      borderData: FlBorderData(show: false),
+                      gridData: FlGridData(
+                        show: true,
+                        horizontalInterval: 5000,
+                        getDrawingHorizontalLine: (value) {
+                          return FlLine(
+                            color: Colors.grey.withOpacity(0.2),
+                            strokeWidth: 1,
+                          );
+                        },
+                      ),
+                      barGroups: List.generate(
+                        _membershipData.length,
+                        (index) => BarChartGroupData(
+                          x: index,
+                          barRods: [
+                            BarChartRodData(
+                              toY: _membershipData[index]['amount'].toDouble(),
+                              color: _membershipData[index]['color'],
+                              width: 20,
+                              borderRadius: BorderRadius.circular(4),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
 
-                        // 카드/멤버십 정보
+                const SizedBox(height: 16),
+
+                // 멤버십별 상세 목록
+                ...List.generate(
+                  _membershipData.length,
+                  (index) => Padding(
+                    padding: const EdgeInsets.only(bottom: 12.0),
+                    child: Row(
+                      children: [
+                        Container(
+                          width: 40,
+                          height: 40,
+                          decoration: BoxDecoration(
+                            color: _membershipData[index]['color'].withOpacity(
+                              0.1,
+                            ),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Icon(
+                            Icons.card_membership,
+                            color: _membershipData[index]['color'],
+                            size: 20,
+                          ),
+                        ),
+                        const SizedBox(width: 12),
                         Expanded(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                data['name'],
+                                _membershipData[index]['name'],
                                 style: const TextStyle(
                                   fontWeight: FontWeight.bold,
-                                  fontSize: 16,
+                                  fontSize: 14,
                                 ),
                               ),
-                              const SizedBox(height: 4),
                               Text(
-                                '${data['count']}회 사용',
+                                '${_membershipData[index]['count']}회 사용',
                                 style: TextStyle(
-                                  fontSize: 14,
-                                  color: Colors.grey.shade600,
+                                  color: Colors.grey[600],
+                                  fontSize: 12,
                                 ),
                               ),
                             ],
                           ),
                         ),
-
-                        // 절약 금액
                         Text(
-                          '${_currencyFormat.format(data['amount'])}원',
-                          style: const TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 16,
-                          ),
+                          '${_currencyFormat.format(_membershipData[index]['amount'])}원',
+                          style: const TextStyle(fontWeight: FontWeight.bold),
                         ),
                       ],
                     ),
                   ),
                 ),
-              )
-              .toList(),
+              ],
+            ),
+          ),
         ],
       ),
     );
   }
 
-  // 요약 카드 위젯
-  Widget _buildSummaryCard() {
+  // 총 절약 금액 카드
+  Widget _buildTotalSavingsCard() {
     final currentMonthTotal = _savingsByMonth['5월']!.reduce((a, b) => a + b);
     final previousMonthTotal = _savingsByMonth['4월']!.reduce((a, b) => a + b);
     final percentChange =
@@ -334,6 +422,7 @@ class _StatisticsScreenState extends State<StatisticsScreen>
             .round();
 
     return Container(
+      margin: const EdgeInsets.only(bottom: 16),
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         gradient: LinearGradient(
@@ -347,66 +436,42 @@ class _StatisticsScreenState extends State<StatisticsScreen>
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.grey.withOpacity(0.3),
-            spreadRadius: 1,
-            blurRadius: 6,
-            offset: const Offset(0, 3),
+            color: AppTheme.primaryColor.withOpacity(0.3),
+            blurRadius: 8,
+            offset: const Offset(0, 4),
           ),
         ],
       ),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Text(
-            '5월 절약 금액',
+            '이번달 총 절약 금액',
             style: TextStyle(color: Colors.white, fontSize: 16),
           ),
-          const SizedBox(height: 8),
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: [
-              Text(
-                _currencyFormat.format(currentMonthTotal),
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 32,
-                  fontWeight: FontWeight.bold,
-                ),
+          const SizedBox(height: 10),
+          Text(
+            '${_currencyFormat.format(138500)}원',
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 32,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          const SizedBox(height: 10),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+            decoration: BoxDecoration(
+              color: Colors.white.withOpacity(0.2),
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: Text(
+              '지난달보다 ${percentChange.abs()}% 증가',
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 14,
+                fontWeight: FontWeight.w500,
               ),
-              const SizedBox(width: 4),
-              const Text(
-                '원',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              const Spacer(),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.3),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Row(
-                  children: [
-                    Icon(
-                      percentChange >= 0
-                          ? Icons.arrow_upward
-                          : Icons.arrow_downward,
-                      color: Colors.white,
-                      size: 14,
-                    ),
-                    const SizedBox(width: 2),
-                    Text(
-                      '${percentChange.abs()}%',
-                      style: const TextStyle(color: Colors.white, fontSize: 14),
-                    ),
-                  ],
-                ),
-              ),
-            ],
+            ),
           ),
           const SizedBox(height: 16),
           Row(
@@ -443,154 +508,343 @@ class _StatisticsScreenState extends State<StatisticsScreen>
     );
   }
 
-  // 목표 달성률 프로그레스 바
-  Widget _buildGoalProgressBar() {
-    // 목표: 6만원 절약, 현재: 48500원 절약
-    const double goalAmount = 60000;
-    const double currentAmount = 48500;
-    final double percentage = (currentAmount / goalAmount * 100).clamp(0, 100);
-
-    return Column(
-      children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            const Text('5월 목표', style: TextStyle(fontWeight: FontWeight.bold)),
-            Text(
-              '${percentage.toInt()}% 달성',
-              style: TextStyle(
-                color: AppTheme.primaryColor,
-                fontWeight: FontWeight.bold,
-              ),
+  // 월별 추이 차트
+  Widget _buildMonthlyChart() {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 16),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 10,
+            spreadRadius: 0,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            '월별 절약 추이',
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              color: Colors.black87,
             ),
-          ],
-        ),
-        const SizedBox(height: 8),
-        Stack(
-          children: [
-            // 배경 바
-            Container(
-              height: 20,
-              width: double.infinity,
-              decoration: BoxDecoration(
-                color: Colors.grey.shade200,
-                borderRadius: BorderRadius.circular(10),
-              ),
-            ),
-            // 진행 바
-            Container(
-              height: 20,
-              width:
-                  MediaQuery.of(context).size.width * (percentage / 100) -
-                  32, // 패딩 고려
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [
-                    AppTheme.primaryColor,
-                    AppTheme.primaryColor.withOpacity(0.7),
-                  ],
-                  begin: Alignment.centerLeft,
-                  end: Alignment.centerRight,
+          ),
+          const SizedBox(height: 20),
+          SizedBox(
+            height: 200,
+            child: LineChart(
+              LineChartData(
+                gridData: FlGridData(
+                  show: true,
+                  drawVerticalLine: false,
+                  horizontalInterval: 20000,
+                  getDrawingHorizontalLine: (value) {
+                    return FlLine(
+                      color: Colors.grey.withOpacity(0.2),
+                      strokeWidth: 1,
+                    );
+                  },
                 ),
-                borderRadius: BorderRadius.circular(10),
+                titlesData: FlTitlesData(
+                  show: true,
+                  rightTitles: AxisTitles(
+                    sideTitles: SideTitles(showTitles: false),
+                  ),
+                  topTitles: AxisTitles(
+                    sideTitles: SideTitles(showTitles: false),
+                  ),
+                  bottomTitles: AxisTitles(
+                    sideTitles: SideTitles(
+                      showTitles: true,
+                      getTitlesWidget: (value, meta) {
+                        if (value.toInt() >= _monthlySavings.length ||
+                            value < 0) {
+                          return const SizedBox.shrink();
+                        }
+                        return Padding(
+                          padding: const EdgeInsets.only(top: 8.0),
+                          child: Text(
+                            _monthlySavings[value.toInt()]['month'],
+                            style: const TextStyle(
+                              color: Colors.grey,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 12,
+                            ),
+                          ),
+                        );
+                      },
+                      reservedSize: 30,
+                    ),
+                  ),
+                  leftTitles: AxisTitles(
+                    sideTitles: SideTitles(
+                      showTitles: true,
+                      interval: 20000,
+                      getTitlesWidget: (value, meta) {
+                        return Text(
+                          '${(value / 10000).toInt()}만',
+                          style: const TextStyle(
+                            color: Colors.grey,
+                            fontSize: 10,
+                          ),
+                        );
+                      },
+                      reservedSize: 30,
+                    ),
+                  ),
+                ),
+                borderData: FlBorderData(show: false),
+                lineBarsData: [
+                  LineChartBarData(
+                    spots: List.generate(
+                      _monthlySavings.length,
+                      (index) => FlSpot(
+                        index.toDouble(),
+                        _monthlySavings[index]['amount'].toDouble(),
+                      ),
+                    ),
+                    isCurved: true,
+                    color: AppTheme.primaryColor,
+                    barWidth: 3,
+                    isStrokeCapRound: true,
+                    dotData: FlDotData(
+                      show: true,
+                      getDotPainter: (spot, percent, barData, index) {
+                        return FlDotCirclePainter(
+                          radius: 6,
+                          color: AppTheme.primaryColor,
+                          strokeWidth: 2,
+                          strokeColor: Colors.white,
+                        );
+                      },
+                    ),
+                    belowBarData: BarAreaData(
+                      show: true,
+                      color: AppTheme.primaryColor.withOpacity(0.1),
+                    ),
+                  ),
+                ],
+                minY: 0,
               ),
             ),
-          ],
-        ),
-        const SizedBox(height: 8),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Text(
-              '${_currencyFormat.format(currentAmount)}원',
-              style: const TextStyle(fontSize: 12),
-            ),
-            Text(
-              '목표: ${_currencyFormat.format(goalAmount)}원',
-              style: const TextStyle(fontSize: 12),
-            ),
-          ],
-        ),
-      ],
+          ),
+        ],
+      ),
     );
   }
 
-  // 인기 혜택 목록
-  Widget _buildPopularBenefitsList() {
-    // 임시 데이터
-    final List<Map<String, dynamic>> popularBenefits = [
-      {'title': '스타벅스 아메리카노 1+1', 'saved': 8000, 'usageCount': 4},
-      {'title': 'CGV 영화 티켓 30% 할인', 'saved': 12000, 'usageCount': 3},
-      {'title': '교촌치킨 10% 할인', 'saved': 6000, 'usageCount': 2},
-    ];
+  // 카테고리별 분석
+  Widget _buildCategoryBreakdown() {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 16),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 10,
+            spreadRadius: 0,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            '카테고리별 절약 금액',
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              color: Colors.black87,
+            ),
+          ),
+          const SizedBox(height: 16),
 
-    return Column(
-      children:
-          popularBenefits
-              .map(
-                (benefit) => Card(
-                  margin: const EdgeInsets.only(bottom: 12),
-                  child: Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: Row(
+          // 파이 차트
+          SizedBox(
+            height: 200,
+            child: PieChart(
+              PieChartData(
+                sections: List.generate(_categorySavings.length, (index) {
+                  final total = _categorySavings.fold(
+                    0.0,
+                    (sum, item) => sum + item['amount'],
+                  );
+                  final percentage = _categorySavings[index]['amount'] / total;
+
+                  return PieChartSectionData(
+                    color: _categorySavings[index]['color'],
+                    value: _categorySavings[index]['amount'].toDouble(),
+                    title: '${(percentage * 100).round()}%',
+                    radius: 70,
+                    titleStyle: const TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                    ),
+                  );
+                }),
+                sectionsSpace: 2,
+                centerSpaceRadius: 40,
+                startDegreeOffset: -90,
+              ),
+            ),
+          ),
+
+          const SizedBox(height: 16),
+
+          // 카테고리 목록
+          ..._categorySavings.map((category) {
+            return Padding(
+              padding: const EdgeInsets.only(bottom: 16),
+              child: Row(
+                children: [
+                  Container(
+                    width: 40,
+                    height: 40,
+                    decoration: BoxDecoration(
+                      color: category['color'].withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Icon(
+                      category['icon'],
+                      color: category['color'],
+                      size: 20,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        // 순위 표시
-                        Container(
-                          width: 24,
-                          height: 24,
-                          decoration: BoxDecoration(
-                            color: AppTheme.primaryColor,
-                            shape: BoxShape.circle,
-                          ),
-                          child: Center(
-                            child: Text(
-                              '${popularBenefits.indexOf(benefit) + 1}',
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 16),
-
-                        // 혜택 정보
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                benefit['title'],
-                                style: const TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                              const SizedBox(height: 4),
-                              Text(
-                                '${benefit['usageCount']}회 사용',
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  color: Colors.grey.shade600,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-
-                        // 절약 금액
                         Text(
-                          '${_currencyFormat.format(benefit['saved'])}원',
+                          category['category'],
+                          style: const TextStyle(
+                            fontWeight: FontWeight.w500,
+                            fontSize: 14,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        LinearProgressIndicator(
+                          value: category['amount'] / 50000,
+                          backgroundColor: Colors.grey[200],
+                          valueColor: AlwaysStoppedAnimation<Color>(
+                            category['color'],
+                          ),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Text(
+                    '${_currencyFormat.format(category['amount'])}원',
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 14,
+                    ),
+                  ),
+                ],
+              ),
+            );
+          }).toList(),
+        ],
+      ),
+    );
+  }
+
+  // 혜택 내역
+  Widget _buildSavingBenefits() {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 10,
+            spreadRadius: 0,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            '이번달 혜택 내역',
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              color: Colors.black87,
+            ),
+          ),
+          const SizedBox(height: 16),
+          ..._benefits.map((benefit) {
+            return Padding(
+              padding: const EdgeInsets.only(bottom: 12),
+              child: Row(
+                children: [
+                  Container(
+                    width: 40,
+                    height: 40,
+                    decoration: BoxDecoration(
+                      color: benefit['color'].withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Icon(
+                      benefit['icon'],
+                      color: benefit['color'],
+                      size: 20,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          benefit['name'],
+                          style: const TextStyle(
+                            fontWeight: FontWeight.w500,
+                            fontSize: 14,
+                          ),
+                        ),
+                        Text(
+                          benefit['date'],
                           style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            color: AppTheme.primaryColor,
+                            fontSize: 12,
+                            color: Colors.grey[600],
                           ),
                         ),
                       ],
                     ),
                   ),
-                ),
-              )
-              .toList(),
+                  Text(
+                    '${_currencyFormat.format(benefit['amount'])}원',
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 14,
+                      color: Colors.green,
+                    ),
+                  ),
+                ],
+              ),
+            );
+          }).toList(),
+        ],
+      ),
     );
   }
 }

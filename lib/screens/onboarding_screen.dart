@@ -4,7 +4,7 @@ import 'package:heafit/constants/theme.dart';
 import 'package:heafit/screens/main_screen.dart';
 
 class OnboardingScreen extends StatefulWidget {
-  const OnboardingScreen({Key? key}) : super(key: key);
+  const OnboardingScreen({super.key});
 
   @override
   State<OnboardingScreen> createState() => _OnboardingScreenState();
