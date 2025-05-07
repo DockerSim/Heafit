@@ -30,13 +30,18 @@ class BenefitDetail {
 
 class CategoryScreen extends StatefulWidget {
   final String? initialCategory;
+  final String? initialSubCategory;
   final bool showFavoritesOnly;
+  // 알림 상태 변경 콜백
+  final Function(bool)? onNotificationStateChanged;
 
   const CategoryScreen({
-    Key? key,
+    super.key,
     this.initialCategory,
+    this.initialSubCategory,
     this.showFavoritesOnly = false,
-  }) : super(key: key);
+    this.onNotificationStateChanged,
+  });
 
   @override
   State<CategoryScreen> createState() => _CategoryScreenState();
@@ -46,7 +51,7 @@ class _CategoryScreenState extends State<CategoryScreen>
     with SingleTickerProviderStateMixin {
   // Google 인증 서비스
   final GoogleAuthService _googleAuthService = GoogleAuthService();
-  bool _isCalendarConnected = false;
+  final bool _isCalendarConnected = false;
 
   // 선택된 메인 카테고리 인덱스
   int _selectedCategoryIndex = 0;
@@ -59,6 +64,9 @@ class _CategoryScreenState extends State<CategoryScreen>
 
   // 혜택 상세 정보 표시 여부
   bool _showBenefitDetail = false;
+
+  // 알림 화면 표시 여부
+  bool _showNotifications = false;
 
   // 선택된 혜택
   BenefitDetail? _selectedBenefit;
@@ -200,6 +208,58 @@ class _CategoryScreenState extends State<CategoryScreen>
     ],
   };
 
+  // 알림 데이터
+  final List<Map<String, dynamic>> _notifications = [
+    {
+      'type': '혜택 사용 여부',
+      'title': '일정에 담아두신 혜택을 사용하셨나요?',
+      'description':
+          '일정에 담아두신 혜택에 대한 사용 여부를 알려주세요!\nBenefit plus가 캘린더에 확인하기 쉽게 정리해드릴게요!',
+      'icon': 'assets/logo/heafit-logo2.png',
+      'days_ago': '1일 전',
+      'discount_amount': 2500.0,
+      'benefit_name': '버거킹 할인 혜택',
+    },
+    {
+      'type': '일정 변경 제안',
+      'title': '일정을 변경해보는 건 어떨까요?',
+      'description':
+          '5일에 예정되어 있던 버거킹 일정을 12일로 바꾸는 건 어떨까요? 12일부터 버거킹의 와퍼 소고기 버거를 2,500원 할인해주는 행사가 있어요!',
+      'icon': 'assets/logo/heafit-logo2.png',
+      'days_ago': '3일 전',
+      'from_date': 5,
+      'to_date': 12,
+    },
+    {
+      'type': '일정 변경 제안',
+      'title': '일정을 변경해보는 건 어떨까요?',
+      'description':
+          '5일에 예정되어 있던 버거킹 일정을 12일로 바꾸는 건 어떨까요? 12일부터 버거킹의 와퍼 소고기 버거를 2,500원 할인해주는 행사가 있어요!',
+      'icon': 'assets/logo/heafit-logo2.png',
+      'days_ago': '4일 전',
+      'from_date': 5,
+      'to_date': 12,
+    },
+    {
+      'type': '관심 카테고리 혜택',
+      'title': '마감일이 다가와요!',
+      'description': '버거킹의 와퍼 소고기 버거를 2,500원 할인된 가격으로 만나보세요!',
+      'icon': 'assets/logo/heafit-logo2.png',
+      'days_ago': '10일 전',
+      'category': '음식',
+    },
+  ];
+
+  // 알림 화면 표시 상태 설정 메서드
+  void _setShowNotifications(bool value) {
+    setState(() {
+      _showNotifications = value;
+    });
+
+    // 콜백 호출
+    widget.onNotificationStateChanged?.call(value);
+  }
+
   @override
   void initState() {
     super.initState();
@@ -212,6 +272,11 @@ class _CategoryScreenState extends State<CategoryScreen>
           break;
         }
       }
+    }
+
+    // 초기 서브 카테고리 설정
+    if (widget.initialSubCategory != null) {
+      _selectedSubCategory = widget.initialSubCategory;
     }
 
     // 즐겨찾기 필터 설정
@@ -232,6 +297,11 @@ class _CategoryScreenState extends State<CategoryScreen>
 
   @override
   Widget build(BuildContext context) {
+    // 알림 화면이 활성화된 경우
+    if (_showNotifications) {
+      return _buildNotificationsScreen();
+    }
+
     // 상세 화면 표시
     if (_showBenefitDetail && _selectedBenefit != null) {
       return _buildBenefitDetailScreen();
@@ -239,45 +309,30 @@ class _CategoryScreenState extends State<CategoryScreen>
 
     return Scaffold(
       backgroundColor: Colors.white,
-      appBar: AppBar(
-        title: Row(
-          children: [
-            Image.asset('assets/logo/heafit-logo2.png', width: 100, height: 50),
-            const Spacer(),
-            IconButton(
-              icon: const Icon(
-                Icons.notifications_none,
-                size: 28,
-                color: Colors.black,
-              ),
-              onPressed: () {
-                // 알림 기능은 구현하지 않음
-              },
-            ),
-          ],
-        ),
-        leadingWidth: 0,
-        automaticallyImplyLeading: false,
-        backgroundColor: Colors.white,
-        elevation: 0,
-        actions: [
-          // 즐겨찾기 필터링 버튼
-          if (!_showBenefitDetail)
-            IconButton(
-              icon: Icon(
-                _showFavoritesOnly ? Icons.star : Icons.star_border,
-                color: _showFavoritesOnly ? Colors.yellow : null,
-              ),
-              onPressed: () {
-                setState(() {
-                  _showFavoritesOnly = !_showFavoritesOnly;
-                });
-              },
-            ),
-        ],
-      ),
       body: Column(
         children: [
+          // 필터링 버튼
+          if (!_showBenefitDetail)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(0, 8, 16, 0),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  IconButton(
+                    icon: Icon(
+                      _showFavoritesOnly ? Icons.star : Icons.star_border,
+                      color: _showFavoritesOnly ? Colors.yellow : null,
+                    ),
+                    onPressed: () {
+                      setState(() {
+                        _showFavoritesOnly = !_showFavoritesOnly;
+                      });
+                    },
+                  ),
+                ],
+              ),
+            ),
+
           // 카테고리 네비게이션바
           _buildMainCategoryTabs(),
 
@@ -307,40 +362,52 @@ class _CategoryScreenState extends State<CategoryScreen>
           ),
         ],
       ),
-      child: ListView.builder(
-        scrollDirection: Axis.horizontal,
-        itemCount: _mainCategories.length,
-        itemBuilder: (context, index) {
-          final isSelected = _selectedCategoryIndex == index;
-          return GestureDetector(
-            onTap: () {
-              setState(() {
-                _selectedCategoryIndex = index;
-                _selectedSubCategory = null; // 서브 카테고리 선택 초기화
-              });
-            },
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 20),
-              alignment: Alignment.center,
-              decoration: BoxDecoration(
-                border: Border(
-                  bottom: BorderSide(
-                    color:
-                        isSelected ? AppTheme.primaryColor : Colors.transparent,
-                    width: 2,
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center, // 중앙 정렬
+        children: [
+          Container(
+            width: MediaQuery.of(context).size.width * 0.8, // 화면 너비의 80%
+            child: ListView.builder(
+              scrollDirection: Axis.horizontal,
+              itemCount: _mainCategories.length,
+              itemBuilder: (context, index) {
+                final isSelected = _selectedCategoryIndex == index;
+                return GestureDetector(
+                  onTap: () {
+                    setState(() {
+                      _selectedCategoryIndex = index;
+                      _selectedSubCategory = null; // 서브 카테고리 선택 초기화
+                    });
+                  },
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 20),
+                    alignment: Alignment.center,
+                    decoration: BoxDecoration(
+                      border: Border(
+                        bottom: BorderSide(
+                          color:
+                              isSelected
+                                  ? AppTheme.primaryColor
+                                  : Colors.transparent,
+                          width: 2,
+                        ),
+                      ),
+                    ),
+                    child: Text(
+                      _mainCategories[index]['name'],
+                      style: TextStyle(
+                        color:
+                            isSelected ? AppTheme.primaryColor : Colors.black,
+                        fontWeight:
+                            isSelected ? FontWeight.bold : FontWeight.normal,
+                      ),
+                    ),
                   ),
-                ),
-              ),
-              child: Text(
-                _mainCategories[index]['name'],
-                style: TextStyle(
-                  color: isSelected ? AppTheme.primaryColor : Colors.black,
-                  fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                ),
-              ),
+                );
+              },
             ),
-          );
-        },
+          ),
+        ],
       ),
     );
   }
@@ -420,15 +487,6 @@ class _CategoryScreenState extends State<CategoryScreen>
             padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
             child: Row(
               children: [
-                IconButton(
-                  icon: const Icon(Icons.arrow_back),
-                  onPressed: () {
-                    setState(() {
-                      _selectedSubCategory = null;
-                    });
-                  },
-                ),
-                const SizedBox(width: 8),
                 Text(
                   subCategory,
                   style: const TextStyle(
@@ -682,13 +740,7 @@ class _CategoryScreenState extends State<CategoryScreen>
               width: double.infinity,
               child: ElevatedButton(
                 onPressed: () {
-                  // 일정 추가 기능은 백엔드 연동 없이 Toast 메시지만 표시
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('일정에 추가되었습니다.'),
-                      duration: Duration(seconds: 2),
-                    ),
-                  );
+                  _showAddToCalendarDialog();
                 },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppTheme.primaryColor,
@@ -705,6 +757,172 @@ class _CategoryScreenState extends State<CategoryScreen>
               ),
             ),
           ],
+        ),
+      ),
+    );
+  }
+
+  // 일정 추가 다이얼로그
+  void _showAddToCalendarDialog() {
+    final TextEditingController titleController = TextEditingController(
+      text: _selectedBenefit?.title ?? '',
+    );
+    DateTime selectedDate = DateTime.now();
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return AlertDialog(
+              title: const Text('일정 추가'),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // 일정 제목 입력
+                  TextField(
+                    controller: titleController,
+                    decoration: const InputDecoration(
+                      labelText: '일정 제목',
+                      border: OutlineInputBorder(),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+
+                  // 날짜 선택
+                  Row(
+                    children: [
+                      const Text('날짜: '),
+                      TextButton(
+                        onPressed: () async {
+                          final DateTime? pickedDate = await showDatePicker(
+                            context: context,
+                            initialDate: selectedDate,
+                            firstDate: DateTime.now(),
+                            lastDate: DateTime(2100),
+                          );
+                          if (pickedDate != null &&
+                              pickedDate != selectedDate) {
+                            setState(() {
+                              selectedDate = pickedDate;
+                            });
+                          }
+                        },
+                        child: Text(
+                          '${selectedDate.year}년 ${selectedDate.month}월 ${selectedDate.day}일',
+                          style: const TextStyle(
+                            color: Colors.blue,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                  },
+                  child: const Text('취소'),
+                ),
+                ElevatedButton(
+                  onPressed: () {
+                    // 일정 추가 로직 구현 (백엔드 연동부분은 건드리지 않음)
+                    Navigator.of(context).pop();
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text(
+                          '${titleController.text} 일정이 ${selectedDate.year}년 ${selectedDate.month}월 ${selectedDate.day}일에 추가되었습니다.',
+                        ),
+                        duration: const Duration(seconds: 2),
+                      ),
+                    );
+                  },
+                  child: const Text('추가'),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
+
+  // 알림 화면 구현
+  Widget _buildNotificationsScreen() {
+    return WillPopScope(
+      onWillPop: () async {
+        _setShowNotifications(false);
+        return false;
+      },
+      child: Scaffold(
+        backgroundColor: Colors.white,
+        appBar: AppBar(
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back, color: Colors.black),
+            onPressed: () {
+              _setShowNotifications(false);
+            },
+          ),
+          elevation: 0,
+          backgroundColor: Colors.white,
+        ),
+        body: ListView.separated(
+          itemCount: _notifications.length,
+          separatorBuilder:
+              (context, index) => Divider(
+                height: 1,
+                color: const Color(0xFFECECEC),
+                thickness: 1,
+                indent: 7,
+                endIndent: 7,
+              ),
+          itemBuilder: (context, index) {
+            final notification = _notifications[index];
+            return ListTile(
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 16,
+                vertical: 8,
+              ),
+              leading: CircleAvatar(
+                backgroundColor: Colors.grey[200],
+                child: ClipOval(
+                  child: Image.asset(
+                    notification['icon'],
+                    width: 40,
+                    height: 40,
+                    fit: BoxFit.cover,
+                  ),
+                ),
+              ),
+              title: Text(
+                notification['title'],
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              subtitle: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const SizedBox(height: 4),
+                  Text(
+                    notification['description'],
+                    style: const TextStyle(fontSize: 14),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    notification['days_ago'],
+                    style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+                  ),
+                ],
+              ),
+              isThreeLine: true,
+            );
+          },
         ),
       ),
     );

@@ -1,8 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:heafit/constants/theme.dart';
-import 'package:heafit/widgets/benefit_card.dart';
-import 'package:heafit/widgets/category_item.dart';
-import 'package:heafit/widgets/section_title.dart';
 import 'package:heafit/screens/statistics_screen.dart';
 import 'package:heafit/screens/calendar_screen.dart';
 import 'package:heafit/screens/category_screen.dart';
