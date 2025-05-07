@@ -17,17 +17,29 @@ class _MainScreenState extends State<MainScreen>
   int _currentIndex = 0;
   final PageController _pageController = PageController();
 
+  // 홈 화면의 알림창 표시 여부
+  bool _showingNotifications = false;
+
   // 각 탭에 해당하는 화면들
-  final List<Widget> _screens = [
-    const HomeScreen(),
-    const CategoryScreen(),
-    const CalendarScreen(),
-    const ProfileScreen(),
-  ];
+  late final List<Widget> _screens;
 
   @override
   void initState() {
     super.initState();
+
+    // HomeScreen에서 알림 표시 상태가 변경될 때 콜백 함수를 전달
+    _screens = [
+      HomeScreen(
+        onNotificationStateChanged: (isShowing) {
+          setState(() {
+            _showingNotifications = isShowing;
+          });
+        },
+      ),
+      const CategoryScreen(),
+      const CalendarScreen(),
+      const ProfileScreen(),
+    ];
   }
 
   @override
@@ -70,43 +82,55 @@ class _MainScreenState extends State<MainScreen>
         children: _screens,
         physics: const NeverScrollableScrollPhysics(), // 스와이프로 페이지 전환 비활성화
       ),
-      bottomNavigationBar: Container(
-        decoration: BoxDecoration(
-          color: surfaceColor,
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.1),
-              blurRadius: 10,
-              spreadRadius: 0,
-              offset: const Offset(0, -2),
-            ),
-          ],
-        ),
-        child: SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 8.0),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
-              children: [
-                _buildNavItem(0, Icons.home_outlined, Icons.home, '홈'),
-                _buildNavItem(
-                  1,
-                  Icons.category_outlined,
-                  Icons.category,
-                  '카테고리',
+      // 알림창이 표시 중이면 하단 네비게이션 바를 숨김
+      bottomNavigationBar:
+          _showingNotifications
+              ? null
+              : Container(
+                decoration: BoxDecoration(
+                  color: surfaceColor,
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.1),
+                      blurRadius: 10,
+                      spreadRadius: 0,
+                      offset: const Offset(0, -2),
+                    ),
+                  ],
                 ),
-                _buildNavItem(
-                  2,
-                  Icons.calendar_month_outlined,
-                  Icons.calendar_month,
-                  '일정',
+                child: SafeArea(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8.0,
+                      vertical: 8.0,
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceAround,
+                      children: [
+                        _buildNavItem(0, Icons.home_outlined, Icons.home, '홈'),
+                        _buildNavItem(
+                          1,
+                          Icons.category_outlined,
+                          Icons.category,
+                          '카테고리',
+                        ),
+                        _buildNavItem(
+                          2,
+                          Icons.calendar_month_outlined,
+                          Icons.calendar_month,
+                          '일정',
+                        ),
+                        _buildNavItem(
+                          3,
+                          Icons.settings_outlined,
+                          Icons.settings,
+                          '설정',
+                        ),
+                      ],
+                    ),
+                  ),
                 ),
-                _buildNavItem(3, Icons.person_outline, Icons.person, '프로필'),
-              ],
-            ),
-          ),
-        ),
-      ),
+              ),
     );
   }
 
