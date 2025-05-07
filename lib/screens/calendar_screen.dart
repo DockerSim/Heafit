@@ -6,9 +6,13 @@ import 'package:google_sign_in/google_sign_in.dart';
 import 'package:googleapis/calendar/v3.dart' as calendar;
 
 class CalendarScreen extends StatefulWidget {
+<<<<<<< HEAD
   final List<int>? highlightDates;
 
   const CalendarScreen({Key? key, this.highlightDates}) : super(key: key);
+=======
+  const CalendarScreen({super.key});
+>>>>>>> origin/feat/category
 
   @override
   State<CalendarScreen> createState() => _CalendarScreenState();
