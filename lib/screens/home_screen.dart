@@ -250,28 +250,6 @@ class HomeScreenState extends State<HomeScreen> {
     // 메인 홈 화면
     return Scaffold(
       backgroundColor: Colors.white,
-      appBar: AppBar(
-        title: Row(
-          children: [
-            Image.asset('assets/logo/heafit-logo2.png', width: 100, height: 50),
-            const Spacer(),
-            IconButton(
-              icon: const Icon(
-                Icons.notifications_none,
-                size: 28,
-                color: Colors.black,
-              ),
-              onPressed: () {
-                _setShowNotifications(true);
-              },
-            ),
-          ],
-        ),
-        leadingWidth: 0,
-        automaticallyImplyLeading: false,
-        backgroundColor: Colors.white,
-        elevation: 0,
-      ),
       body: SingleChildScrollView(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,

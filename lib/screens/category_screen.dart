@@ -214,7 +214,7 @@ class _CategoryScreenState extends State<CategoryScreen>
       'type': '혜택 사용 여부',
       'title': '일정에 담아두신 혜택을 사용하셨나요?',
       'description':
-          '일정에 담아두신 혜택에 대한 사용 여부를 알려주세요!\nBenefit plus가 캘린더에 확인하기 쉽게 정리해드릴게요!',
+          '일정에 담아두신 혜택에 대한 사용 여부를 알려주세요!\nHeafit이 캘린더에 확인하기 쉽게 정리해드릴게요!',
       'icon': 'assets/logo/heafit-logo2.png',
       'days_ago': '1일 전',
       'discount_amount': 2500.0,
@@ -311,28 +311,6 @@ class _CategoryScreenState extends State<CategoryScreen>
       backgroundColor: Colors.white,
       body: Column(
         children: [
-          // 필터링 버튼
-          if (!_showBenefitDetail)
-            Padding(
-              padding: const EdgeInsets.fromLTRB(0, 8, 16, 0),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.end,
-                children: [
-                  IconButton(
-                    icon: Icon(
-                      _showFavoritesOnly ? Icons.star : Icons.star_border,
-                      color: _showFavoritesOnly ? Colors.yellow : null,
-                    ),
-                    onPressed: () {
-                      setState(() {
-                        _showFavoritesOnly = !_showFavoritesOnly;
-                      });
-                    },
-                  ),
-                ],
-              ),
-            ),
-
           // 카테고리 네비게이션바
           _buildMainCategoryTabs(),
 
@@ -571,24 +549,6 @@ class _CategoryScreenState extends State<CategoryScreen>
                                         ),
                                       ],
                                     ),
-                                  ),
-                                  // 즐겨찾기 버튼
-                                  IconButton(
-                                    icon: Icon(
-                                      benefits[index].isFavorite
-                                          ? Icons.star
-                                          : Icons.star_border,
-                                      color:
-                                          benefits[index].isFavorite
-                                              ? Colors.yellow
-                                              : Colors.grey,
-                                    ),
-                                    onPressed: () {
-                                      setState(() {
-                                        benefits[index].isFavorite =
-                                            !benefits[index].isFavorite;
-                                      });
-                                    },
                                   ),
                                 ],
                               ),
