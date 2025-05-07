@@ -10,8 +10,13 @@ typedef NotificationStateCallback = void Function(bool isShowing);
 class HomeScreen extends StatefulWidget {
   // 알림 상태 변경 콜백
   final NotificationStateCallback? onNotificationStateChanged;
+  final Function(String)? onCategorySelected;
 
-  const HomeScreen({super.key, this.onNotificationStateChanged});
+  const HomeScreen({
+    super.key,
+    this.onNotificationStateChanged,
+    this.onCategorySelected,
+  });
 
   @override
   State<HomeScreen> createState() => HomeScreenState();
@@ -202,27 +207,18 @@ class HomeScreenState extends State<HomeScreen> {
 
   // 혜택 카테고리로 이동
   void _navigateToCategoryScreen(String category) {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => CategoryScreen(initialCategory: category),
-      ),
-    );
+    // 카테고리 탭으로 이동하도록 콜백 호출
+    // 메인 스크린의 부모에게 카테고리 탭으로 전환하라고 알림
+    if (widget.onCategorySelected != null) {
+      widget.onCategorySelected!(category);
+    }
   }
 
   // 캘린더 화면으로 이동
   void _navigateToCalendarScreen({int? fromDate, int? toDate}) {
     Navigator.push(
       context,
-      MaterialPageRoute(
-        builder:
-            (context) => CalendarScreen(
-              highlightDates: [
-                if (fromDate != null) fromDate,
-                if (toDate != null) toDate,
-              ],
-            ),
-      ),
+      MaterialPageRoute(builder: (context) => const CalendarScreen()),
     );
   }
 

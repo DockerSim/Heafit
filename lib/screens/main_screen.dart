@@ -7,7 +7,6 @@ import 'package:heafit/screens/profile_screen.dart';
 
 class MainScreen extends StatefulWidget {
   const MainScreen({super.key});
-  const MainScreen({super.key});
 
   @override
   State<MainScreen> createState() => _MainScreenState();
@@ -72,6 +71,9 @@ class _MainScreenState extends State<MainScreen>
   // 사용 여부 버튼 표시 여부
   bool _showUsageButtons = false;
 
+  // 선택된 카테고리를 저장할 변수 추가
+  String? _selectedCategory;
+
   // 혜택 사용 여부 처리
   void _handleBenefitUsage(bool used) {
     if (_selectedNotificationIndex == null) return;
@@ -100,17 +102,34 @@ class _MainScreenState extends State<MainScreen>
   @override
   void initState() {
     super.initState();
+  }
 
-    // HomeScreen에서 알림 표시 상태가 변경될 때 콜백 함수를 전달
-    _screens = [
+  // 현재 상태에 맞는 화면을 반환하는 메소드
+  List<Widget> _getScreens() {
+    return [
       HomeScreen(
         onNotificationStateChanged: (isShowing) {
           setState(() {
             _showingNotifications = isShowing;
           });
         },
+        onCategorySelected: (category) {
+          // 카테고리 선택 시 카테고리 탭으로 이동
+          setState(() {
+            _currentIndex = 1; // 카테고리 탭 인덱스
+            _selectedCategory = category; // 선택한 카테고리 저장
+          });
+
+          // 페이지 전환
+          _pageController.animateToPage(
+            1,
+            duration: const Duration(milliseconds: 300),
+            curve: Curves.easeInOut,
+          );
+        },
       ),
       CategoryScreen(
+        initialCategory: _selectedCategory,
         onNotificationStateChanged: (isShowing) {
           setState(() {
             _showingNotifications = isShowing;
@@ -158,6 +177,9 @@ class _MainScreenState extends State<MainScreen>
     final backgroundColor = Theme.of(context).scaffoldBackgroundColor;
     final surfaceColor = Theme.of(context).colorScheme.surface;
 
+    // 현재 상태에 맞는 화면 목록 가져오기
+    final screens = _getScreens();
+
     return Scaffold(
       appBar: AppBar(
         title: Row(
@@ -190,7 +212,7 @@ class _MainScreenState extends State<MainScreen>
                   });
                 },
                 physics: const NeverScrollableScrollPhysics(),
-                children: _screens, // 스와이프로 페이지 전환 비활성화
+                children: screens, // screens 사용
               ),
       // 알림창이 표시 중이면 하단 네비게이션 바를 숨김
       bottomNavigationBar:
@@ -246,154 +268,167 @@ class _MainScreenState extends State<MainScreen>
 
   // 알림 화면 구현
   Widget _buildNotificationScreen() {
-    return ListView.separated(
-      itemCount: _notifications.length,
-      separatorBuilder:
-          (context, index) => Divider(
-            height: 1,
-            color: const Color(0xFFECECEC),
-            thickness: 1,
-            indent: 7,
-            endIndent: 7,
-          ),
-      itemBuilder: (context, index) {
-        final notification = _notifications[index];
-        final isUsageType = notification['type'] == '혜택 사용 여부';
-        final isSelected = _selectedNotificationIndex == index;
-
-        return GestureDetector(
-          onTap: () {
-            // 혜택 사용 여부 알림인 경우 버튼 표시
-            if (isUsageType) {
-              setState(() {
-                if (_selectedNotificationIndex == index) {
-                  // 이미 선택된 알림을 다시 누르면 버튼 토글
-                  _showUsageButtons = !_showUsageButtons;
-                } else {
-                  // 다른 알림을 선택하면 해당 알림으로 변경하고 버튼 표시
-                  _selectedNotificationIndex = index;
-                  _showUsageButtons = true;
-                }
-              });
-            }
+    return Scaffold(
+      appBar: AppBar(
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: Colors.black),
+          onPressed: () {
+            _toggleNotifications();
           },
-          child: Column(
-            children: [
-              Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 8,
-                ),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    CircleAvatar(
-                      backgroundColor: Colors.grey[200],
-                      child: ClipOval(
-                        child: Image.asset(
-                          notification['icon'],
-                          width: 40,
-                          height: 40,
-                          fit: BoxFit.cover,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 16),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Text(
-                                notification['type'],
-                                style: TextStyle(
-                                  fontSize: 14,
-                                  color: Colors.grey[600],
-                                ),
-                              ),
-                              Text(
-                                notification['days_ago'],
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  color: Colors.grey[600],
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 8),
-                          Text(
-                            notification['title'],
-                            style: const TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          const SizedBox(height: 8),
-                          Text(
-                            notification['description'],
-                            style: const TextStyle(fontSize: 14),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              // 혜택 사용 여부 버튼 (선택된 경우에만 표시)
-              if (isUsageType && isSelected && _showUsageButtons)
+        ),
+        title: const Text('알림', style: TextStyle(color: Colors.black)),
+        backgroundColor: Colors.white,
+        elevation: 0,
+      ),
+      body: ListView.separated(
+        itemCount: _notifications.length,
+        separatorBuilder:
+            (context, index) => Divider(
+              height: 1,
+              color: const Color(0xFFECECEC),
+              thickness: 1,
+              indent: 7,
+              endIndent: 7,
+            ),
+        itemBuilder: (context, index) {
+          final notification = _notifications[index];
+          final isUsageType = notification['type'] == '혜택 사용 여부';
+          final isSelected = _selectedNotificationIndex == index;
+
+          return GestureDetector(
+            onTap: () {
+              // 혜택 사용 여부 알림인 경우 버튼 표시
+              if (isUsageType) {
+                setState(() {
+                  if (_selectedNotificationIndex == index) {
+                    // 이미 선택된 알림을 다시 누르면 버튼 토글
+                    _showUsageButtons = !_showUsageButtons;
+                  } else {
+                    // 다른 알림을 선택하면 해당 알림으로 변경하고 버튼 표시
+                    _selectedNotificationIndex = index;
+                    _showUsageButtons = true;
+                  }
+                });
+              }
+            },
+            child: Column(
+              children: [
                 Padding(
-                  padding: const EdgeInsets.only(bottom: 16.0),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 8,
+                  ),
                   child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // "사용했어요" 버튼
-                      SizedBox(
-                        width: 120,
-                        child: ElevatedButton(
-                          onPressed: () => _handleBenefitUsage(true),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Theme.of(context).primaryColor,
-                            foregroundColor: Colors.white,
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 16,
-                              vertical: 12,
-                            ),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(8),
-                            ),
+                      CircleAvatar(
+                        backgroundColor: Colors.grey[200],
+                        child: ClipOval(
+                          child: Image.asset(
+                            notification['icon'],
+                            width: 40,
+                            height: 40,
+                            fit: BoxFit.cover,
                           ),
-                          child: const Text('사용했어요'),
                         ),
                       ),
                       const SizedBox(width: 16),
-                      // "사용 안했어요" 버튼
-                      SizedBox(
-                        width: 120,
-                        child: OutlinedButton(
-                          onPressed: () => _handleBenefitUsage(false),
-                          style: OutlinedButton.styleFrom(
-                            foregroundColor: Colors.grey,
-                            side: const BorderSide(color: Colors.grey),
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 16,
-                              vertical: 12,
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Text(
+                                  notification['type'],
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    color: Colors.grey[600],
+                                  ),
+                                ),
+                                Text(
+                                  notification['days_ago'],
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    color: Colors.grey[600],
+                                  ),
+                                ),
+                              ],
                             ),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(8),
+                            const SizedBox(height: 8),
+                            Text(
+                              notification['title'],
+                              style: const TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                              ),
                             ),
-                          ),
-                          child: const Text('사용 안했어요'),
+                            const SizedBox(height: 8),
+                            Text(
+                              notification['description'],
+                              style: const TextStyle(fontSize: 14),
+                            ),
+                          ],
                         ),
                       ),
                     ],
                   ),
                 ),
-            ],
-          ),
-        );
-      },
+                // 혜택 사용 여부 버튼 (선택된 경우에만 표시)
+                if (isUsageType && isSelected && _showUsageButtons)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 16.0),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        // "사용했어요" 버튼
+                        SizedBox(
+                          width: 120,
+                          child: ElevatedButton(
+                            onPressed: () => _handleBenefitUsage(true),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Theme.of(context).primaryColor,
+                              foregroundColor: Colors.white,
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 16,
+                                vertical: 12,
+                              ),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                            ),
+                            child: const Text('사용했어요'),
+                          ),
+                        ),
+                        const SizedBox(width: 16),
+                        // "사용 안했어요" 버튼
+                        SizedBox(
+                          width: 120,
+                          child: OutlinedButton(
+                            onPressed: () => _handleBenefitUsage(false),
+                            style: OutlinedButton.styleFrom(
+                              foregroundColor: Colors.grey,
+                              side: const BorderSide(color: Colors.grey),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 16,
+                                vertical: 12,
+                              ),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                            ),
+                            child: const Text('사용 안했어요'),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+              ],
+            ),
+          );
+        },
+      ),
     );
   }
 
