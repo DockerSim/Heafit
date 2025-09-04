@@ -82,65 +82,35 @@ class _SplashScreenState extends State<SplashScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFFFF8E1), // 연한 베이지색 배경
       body: Container(
+        width: double.infinity,
+        height: double.infinity,
         decoration: const BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
-            colors: [Color(0xFFFFF8E1), Color(0xFFFFECB3)],
+            colors: [Colors.white, Color(0xD6FFF6D9)],
           ),
         ),
-        child: Center(
-          child: AnimatedBuilder(
-            animation: _animationController,
-            builder: (context, child) {
-              return Column(
+        child: AnimatedBuilder(
+          animation: _animationController,
+          builder: (context, child) {
+            return Center(
+              child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   const Spacer(flex: 2),
 
-                  // Heafit 로고 이미지 애니메이션 적용
+                  // Heafit 로고 이미지 애니메이션 적용 - 원 모양 배경 제거
                   Transform.scale(
                     scale: _scaleAnimation.value,
                     child: Opacity(
                       opacity: _fadeAnimation.value,
-                      child: Container(
-                        padding: const EdgeInsets.all(24),
-                        width: 220,
-                        height: 220,
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          shape: BoxShape.circle,
-                          boxShadow: [
-                            BoxShadow(
-                              color: const Color(0xFFFF7043).withOpacity(0.2),
-                              blurRadius: 20,
-                              spreadRadius: 5,
-                            ),
-                          ],
-                        ),
-                        child: Image.asset(
-                          'assets/logo/heafit-logo.png',
-                          width: 180,
-                          height: 180,
-                          fit: BoxFit.contain,
-                        ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 30),
-
-                  // 앱 이름
-                  Opacity(
-                    opacity: _fadeAnimation.value,
-                    child: const Text(
-                      'Heafit',
-                      style: TextStyle(
-                        fontSize: 48,
-                        fontWeight: FontWeight.bold,
-                        color: Color(0xFFFF7043), // 주황색 텍스트
-                        letterSpacing: 1.5,
+                      child: Image.asset(
+                        'assets/logo/heafit-logo.png',
+                        width: 180,
+                        height: 180,
+                        fit: BoxFit.contain,
                       ),
                     ),
                   ),
@@ -150,29 +120,28 @@ class _SplashScreenState extends State<SplashScreen>
                   // 로딩 인디케이터
                   Opacity(
                     opacity: _fadeAnimation.value,
-                    child: const SizedBox(
-                      width: 40,
-                      height: 40,
-                      child: CircularProgressIndicator(
-                        valueColor: AlwaysStoppedAnimation<Color>(
-                          Color(0xFFFF7043),
+                    child: Column(
+                      children: [
+                        const SizedBox(
+                          width: 40,
+                          height: 40,
+                          child: CircularProgressIndicator(
+                            valueColor: AlwaysStoppedAnimation<Color>(
+                              Color(0xFFFF7043),
+                            ),
+                            strokeWidth: 3,
+                          ),
                         ),
-                        strokeWidth: 3,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 20),
-
-                  // 로딩 텍스트
-                  Opacity(
-                    opacity: _fadeAnimation.value,
-                    child: const Text(
-                      'LOADING',
-                      style: TextStyle(
-                        fontSize: 14,
-                        color: Colors.grey,
-                        letterSpacing: 2,
-                      ),
+                        const SizedBox(height: 10),
+                        const Text(
+                          'LOADING',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Colors.grey,
+                            letterSpacing: 2,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                   const SizedBox(height: 30),
@@ -185,16 +154,19 @@ class _SplashScreenState extends State<SplashScreen>
                       child: Text(
                         '캘린더를 연동하여 나만을 위한 혜택을 찾아보세요!',
                         textAlign: TextAlign.center,
-                        style: TextStyle(fontSize: 16, color: Colors.grey),
+                        style: TextStyle(
+                          fontSize: 16,
+                          color: Color(0xFF777777),
+                        ),
                       ),
                     ),
                   ),
 
-                  const Spacer(),
+                  const SizedBox(height: 60),
                 ],
-              );
-            },
-          ),
+              ),
+            );
+          },
         ),
       ),
     );

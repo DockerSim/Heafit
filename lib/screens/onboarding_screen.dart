@@ -19,22 +19,22 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     {
       'title': '다양한 혜택 정보',
       'description': '일상 속 다양한 혜택과 할인 정보를 한눈에 확인하세요.',
-      'image': 'assets/logo/heafit-logo.png',
+      'image': 'assets/logo/heafit-logo2.png',
     },
     {
       'title': 'AI 맞춤형 스케줄 관리',
       'description': 'AI가 당신의 일정에 맞는 혜택을 추천해 드려요.',
-      'image': 'assets/logo/heafit-logo.png',
+      'image': 'assets/logo/heafit-logo2.png',
     },
     {
       'title': '혜택 기록 및 분석',
       'description': '사용한 혜택을 기록하고 얼마나 절약했는지 확인하세요.',
-      'image': 'assets/logo/heafit-logo.png',
+      'image': 'assets/logo/heafit-logo2.png',
     },
     {
       'title': '일상 속 자연스러운 사용',
       'description': '어떤 상황에서도 쉽게 이용할 수 있는 직관적인 경험을 제공합니다.',
-      'image': 'assets/logo/heafit-logo.png',
+      'image': 'assets/logo/heafit-logo2.png',
     },
   ];
 
@@ -51,10 +51,10 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  // 로고
+                  // 로고 - heafit-logo2.png로 변경
                   Image.asset(
-                    'assets/logo/heafit-logo.png',
-                    width: 60,
+                    'assets/logo/heafit-logo2.png',
+                    width: 120,
                     height: 60,
                   ),
                 ],
